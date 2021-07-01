@@ -82,11 +82,36 @@ function _initialize(gaTrackingID, options) {
     }
   }
 
-  if (options && options.gaOptions) {
+  const useGA4 = gaTrackingID.indexOf('G-') === 0;
+
+  if (useGA4) {
+    if (options && options.gaOptions) {
+      internalGa('config', gaTrackingID, options.gaOptions);
+    } else {
+      internalGa('config', gaTrackingID);
+    }
+  } else if (options && options.gaOptions) {
     internalGa('create', gaTrackingID, options.gaOptions);
   } else {
     internalGa('create', gaTrackingID, 'auto');
   }
+}
+
+function _extractGaTrackingID(configsOrTrackingId) {
+  if (Array.isArray(configsOrTrackingId)) {
+    if (configsOrTrackingId.length > 0) {
+      const config = configsOrTrackingId[0];
+      if (typeof config !== 'object') {
+        warn('All configs must be an object');
+        return null;
+      }
+      return config.trackingId;
+    }
+  } else {
+    return configsOrTrackingId;
+  }
+
+  return '';
 }
 
 export function addTrackers(configsOrTrackingId, options) {
@@ -112,7 +137,8 @@ export function initialize(configsOrTrackingId, options) {
       return;
     }
 
-    if (!options || options.standardImplementation !== true) loadGA(options);
+    if (!options || options.standardImplementation !== true)
+      loadGA(options, _extractGaTrackingID(configsOrTrackingId));
   }
 
   _alwaysSendToDefaultTracker =
